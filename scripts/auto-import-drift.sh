@@ -39,7 +39,10 @@ curl -s -X GET "https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/fire
 
 curl -s -X GET "https://api.cloudflare.com/client/v4/zones/${ZONE_ID}/firewall/access_rules/rules" \
   -H "Authorization: Bearer ${API_TOKEN}" \
-  -H "Content-Type: application/json" > /tmp/cf-zone-rules.json
+  -H "Content-Type: application/json" > /tmp/cf-zone-rules-all.json
+
+# Filter zone API to only include zone-specific rules (not inherited account rules)
+jq '.result |= map(select(.scope.type == "zone"))' /tmp/cf-zone-rules-all.json > /tmp/cf-zone-rules.json
 
 # Count rules
 CF_ACCOUNT_COUNT=$(jq '.result | length' /tmp/cf-account-rules.json 2>/dev/null || echo "0")
