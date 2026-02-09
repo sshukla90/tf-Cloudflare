@@ -4,9 +4,15 @@ Terraform setup for managing Cloudflare IP access rules.
 
 ## 🎯 How It Works
 
-1. **config.yaml** contains all Cloudflare IP access rules
-2. **Users** clone repo, add rules to config.yaml
-3. **Run** `terraform plan` and `terraform apply` to push to Cloudflare
+**Simple PR-based workflow**:
+1. User clones repo, creates branch, adds rule to `config.yaml`
+2. User creates Pull Request
+3. **CI/CD checks for drift** (blocks if manual changes found)
+4. CI/CD runs `terraform plan` (posts output to PR)
+5. Platform Team reviews and approves PR
+6. Merge to main → **Automatic apply to Cloudflare Production**
+
+**See [docs/WORKFLOW.md](docs/WORKFLOW.md) for complete flow.**
 
 ## 🚀 Quick Start
 
@@ -101,8 +107,9 @@ config_file_path      = "./shared/config.yaml"
 
 ## 📚 Documentation
 
+- **Production Workflow**: [docs/WORKFLOW.md](docs/WORKFLOW.md) ⭐ **Start here**
 - **Initial Setup Script**: [scripts/init.sh](scripts/init.sh) - Automated first-time import
-- **Drift Detection**: [docs/DRIFT-DETECTION.md](docs/DRIFT-DETECTION.md) ⭐ **Prevent manual changes**
+- **Drift Detection**: [docs/DRIFT-DETECTION.md](docs/DRIFT-DETECTION.md) - Prevent manual changes
 - **Initial Import Guide**: [docs/INITIAL-IMPORT.md](docs/INITIAL-IMPORT.md) - Manual import process
 - **Testing Guide**: [docs/TESTING.md](docs/TESTING.md) - Manual testing workflow
 - **Security Module**: [security/README.md](security/README.md) - Module documentation

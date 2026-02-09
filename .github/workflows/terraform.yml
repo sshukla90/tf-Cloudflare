@@ -1,0 +1,180 @@
+name: Terraform CI/CD
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'shared/config.yaml'
+      - '**.tf'
+  push:
+    branches: [main]
+    paths:
+      - 'shared/config.yaml'
+      - '**.tf'
+
+env:
+  TF_VERSION: '1.14.0'
+
+jobs:
+  # Step 1: Check for drift on PR
+  drift-check:
+    name: Check for Drift
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+      
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+      
+      - name: Terraform Init
+        run: terraform init
+        env:
+          TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      
+      - name: Detect Drift
+        id: drift
+        run: |
+          chmod +x scripts/detect-drift.sh
+          ./scripts/detect-drift.sh
+        env:
+          TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        continue-on-error: true
+      
+      - name: Comment on PR if drift detected
+        if: steps.drift.outcome == 'failure'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## ⚠️ Drift Detected!
+              
+Manual changes were found in Cloudflare that are not managed by Terraform.
+
+**Action Required:**
+1. Run \`./scripts/detect-drift.sh\` locally to see details
+2. Import the unmanaged rules or delete them from Cloudflare
+3. Update this PR with the changes
+
+**This PR cannot be merged until drift is resolved.**`
+            })
+      
+      - name: Fail if drift detected
+        if: steps.drift.outcome == 'failure'
+        run: |
+          echo "❌ Drift detected - PR blocked"
+          exit 1
+
+  # Step 2: Terraform plan on PR
+  terraform-plan:
+    name: Terraform Plan
+    runs-on: ubuntu-latest
+    needs: drift-check
+    if: github.event_name == 'pull_request'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+      
+      - name: Terraform Init
+        run: terraform init
+        env:
+          TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      
+      - name: Terraform Validate
+        run: terraform validate
+      
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan -no-color -out=tfplan
+        env:
+          TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        continue-on-error: true
+      
+      - name: Post Plan to PR
+        uses: actions/github-script@v7
+        if: github.event_name == 'pull_request'
+        env:
+          PLAN: "${{ steps.plan.outputs.stdout }}"
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const output = `#### Terraform Plan 📖
+            
+<details><summary>Show Plan</summary>
+
+\`\`\`terraform
+${process.env.PLAN}
+\`\`\`
+
+</details>
+
+**Pusher**: @${{ github.actor }}
+**Event**: ${{ github.event_name }}`;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
+      
+      - name: Terraform Plan Status
+        if: steps.plan.outcome == 'failure'
+        run: exit 1
+
+  # Step 3: Apply on merge to main
+  terraform-apply:
+    name: Terraform Apply (Production)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    environment:
+      name: production
+      url: https://dash.cloudflare.com
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+      
+      - name: Terraform Init
+        run: terraform init
+        env:
+          TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      
+      - name: Terraform Apply
+        run: terraform apply -auto-approve
+        env:
+          TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      
+      - name: Notify on Success
+        if: success()
+        run: |
+          echo "✅ Terraform apply successful!"
+          echo "Changes have been applied to Cloudflare Production"
+      
+      - name: Notify on Failure
+        if: failure()
+        run: |
+          echo "❌ Terraform apply failed!"
+          echo "Please check the logs and fix the issue"
