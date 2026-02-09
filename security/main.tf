@@ -1,3 +1,12 @@
+terraform {
+  required_providers {
+    cloudflare = {
+      source  = "cloudflare/cloudflare"
+      version = "~> 5.0"
+    }
+  }
+}
+
 # Read and decode YAML configuration
 locals {
   config_file = file(var.config_file_path)
