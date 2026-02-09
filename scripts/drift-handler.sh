@@ -211,7 +211,8 @@ auto_import_rules() {
   cp shared/config.yaml "$BACKUP_FILE"
   log_info "Backed up config.yaml to $BACKUP_FILE"
   
-  IMPORTED_COUNT=0
+  # Use temp file for counter (avoid subshell issue)
+  echo "0" > /tmp/import_count.txt
   
   # Process account-level rules
   echo ""
@@ -238,7 +239,9 @@ auto_import_rules() {
       terraform import "module.security.cloudflare_access_rule.ip_rules[\"${RULE_KEY}\"]" \
         "accounts/${ACCOUNT_ID}/${RULE_ID}" 2>/dev/null || log_warning "Import may have failed (rule might already exist)"
       
-      IMPORTED_COUNT=$((IMPORTED_COUNT + 1))
+      # Increment counter
+      COUNT=$(cat /tmp/import_count.txt)
+      echo $((COUNT + 1)) > /tmp/import_count.txt
     fi
   done
   
@@ -267,9 +270,15 @@ auto_import_rules() {
       terraform import "module.security.cloudflare_access_rule.ip_rules[\"${RULE_KEY}\"]" \
         "zones/${ZONE_ID}/${RULE_ID}" 2>/dev/null || log_warning "Import may have failed (rule might already exist)"
       
-      IMPORTED_COUNT=$((IMPORTED_COUNT + 1))
+      # Increment counter
+      COUNT=$(cat /tmp/import_count.txt)
+      echo $((COUNT + 1)) > /tmp/import_count.txt
     fi
   done
+  
+  # Read final count
+  IMPORTED_COUNT=$(cat /tmp/import_count.txt)
+  rm -f /tmp/import_count.txt
   
   echo ""
   log_success "Auto-import complete"
