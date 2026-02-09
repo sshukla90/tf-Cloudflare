@@ -21,5 +21,9 @@ ip_access_rules:
     mode: "block"
     scope: "account"
     notes: "This rule is enabled because of security incident on 2026-02-09"
+  - ip: "6.6.6.6"
+    mode: "block"
+    scope: "account"
+    notes: "This rule is enabled because of security incident on 2026-02-09"
 
 
