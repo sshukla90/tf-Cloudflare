@@ -96,6 +96,26 @@ Manual changes were detected in Cloudflare and have been **automatically importe
 **Note:** These rules were manually added in Cloudflare. Going forward, all changes should be made via this repo.`
               });
             }
+      
+      - name: Post validation results
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const driftStatus = '${{ steps.drift.outcome }}' === 'success' ? '✅' : '❌';
+            
+            let body = `## 🔍 Validation Results\n\n`;
+            body += `${driftStatus} **Drift Detection**\n`;
+            body += `\n---\n`;
+            body += `\n**Next**: Terraform plan will run automatically.\n`;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
 
   # Step 2: Terraform plan on PR
   terraform-plan:

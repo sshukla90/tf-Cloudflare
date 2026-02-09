@@ -347,3 +347,6 @@ case "$MODE" in
     exit 1
     ;;
 esac
+
+# Cleanup temporary files
+rm -f /tmp/cf-account-rules.json /tmp/cf-zone-rules-all.json /tmp/cf-zone-rules.json /tmp/tf-rules.txt 2>/dev/null
