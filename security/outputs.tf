@@ -3,7 +3,7 @@ output "access_rules" {
   value = {
     for key, rule in cloudflare_access_rule.ip_rules : key => {
       id       = rule.id
-      ip       = rule.configuration[0].value
+      ip       = rule.configuration.value
       mode     = rule.mode
       scope    = rule.account_id != null ? "account" : "zone"
       scope_id = rule.account_id != null ? rule.account_id : rule.zone_id

@@ -81,7 +81,7 @@ resource "null_resource" "validate_ip_format" {
 resource "cloudflare_access_rule" "ip_rules" {
   for_each = local.ip_rules
   
-  configuration {
+  configuration = {
     target = "ip"
     value  = each.value.ip
   }
