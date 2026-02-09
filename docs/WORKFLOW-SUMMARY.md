@@ -6,11 +6,12 @@
 
 ## ✅ What Happens on Pull Request
 
-### 1. Drift Check (Automatic - Blocks PR)
+### 1. Drift Check & Auto-Import (Automatic)
 ```
 ✅ Checks if manual changes exist in Cloudflare
-❌ Blocks PR if drift detected
-📝 Posts comment with import commands
+✅ Auto-imports unmanaged rules into config.yaml
+✅ Commits changes back to PR
+📝 Posts comment for Platform Team review
 ```
 
 ### 2. Terraform Plan (Automatic - Shows Changes)
@@ -31,9 +32,10 @@
 
 ## 🚫 PR is Blocked If:
 
-- ❌ **Drift detected** - Manual changes in Cloudflare
 - ❌ **Plan fails** - Invalid configuration
 - ❌ **Validation fails** - Invalid IP, mode, etc.
+
+**Note**: Drift is NOT blocked - it's auto-imported for Platform Team review!
 
 ## 📋 User Checklist
 
@@ -52,10 +54,11 @@
 ## 🎓 Key Points
 
 - **No manual terraform apply** - Everything automated
-- **Drift detection built-in** - Prevents manual changes
-- **Code review required** - Platform team approves
+- **Auto-import drift** - Manual rules automatically imported for review
+- **Platform Team reviews** - Approves all changes including auto-imports
 - **Automatic deployment** - Merge = Deploy
 - **Safe** - Plan shown before apply
+- **Users need no Cloudflare access** - Only Git access required
 
 ## 🔧 Setup Required (One-Time)
 
