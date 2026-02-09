@@ -10,22 +10,31 @@ Terraform setup for managing Cloudflare IP access rules.
 
 ## 🚀 Quick Start
 
-### Setup (First Time)
+### First-Time Setup (Import Existing Rules)
+
+If you have existing IP access rules in Cloudflare:
 
 ```bash
 # 1. Clone repo
-git clone <repo-url>
-cd cf-internal
+git clone https://github.com/sshukla90/tf-Cloudflare.git
+cd tf-Cloudflare
 
-# 2. Copy and configure tfvars
+# 2. Configure API token
 cp terraform.tfvars.example terraform.tfvars
 # Edit terraform.tfvars and add your API token
 
-# 3. Initialize Terraform
-terraform init
+# 3. Run initial import script
+./scripts/init.sh
 ```
 
-### Adding a New IP Rule
+The `init.sh` script will:
+- ✅ Fetch all existing rules from Cloudflare
+- ✅ Generate `shared/config.yaml` with all rules
+- ✅ Initialize Terraform
+- ✅ Import rules into Terraform state
+- ✅ Verify everything is in sync
+
+### Adding New Rules (After Initial Setup)
 
 ```bash
 # 1. Edit shared/config.yaml - ADD your rule to the list
@@ -92,8 +101,10 @@ config_file_path      = "./shared/config.yaml"
 
 ## 📚 Documentation
 
-- **Initial Import Guide**: [docs/INITIAL-IMPORT.md](docs/INITIAL-IMPORT.md)
-- **Security Module**: [security/README.md](security/README.md)
+- **Initial Setup Script**: [scripts/init.sh](scripts/init.sh) - Automated first-time import
+- **Initial Import Guide**: [docs/INITIAL-IMPORT.md](docs/INITIAL-IMPORT.md) - Manual import process
+- **Testing Guide**: [docs/TESTING.md](docs/TESTING.md) - Manual testing workflow
+- **Security Module**: [security/README.md](security/README.md) - Module documentation
 
 ## ✅ Best Practices
 
