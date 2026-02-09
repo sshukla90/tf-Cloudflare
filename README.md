@@ -102,6 +102,7 @@ config_file_path      = "./shared/config.yaml"
 ## 📚 Documentation
 
 - **Initial Setup Script**: [scripts/init.sh](scripts/init.sh) - Automated first-time import
+- **Drift Detection**: [docs/DRIFT-DETECTION.md](docs/DRIFT-DETECTION.md) ⭐ **Prevent manual changes**
 - **Initial Import Guide**: [docs/INITIAL-IMPORT.md](docs/INITIAL-IMPORT.md) - Manual import process
 - **Testing Guide**: [docs/TESTING.md](docs/TESTING.md) - Manual testing workflow
 - **Security Module**: [security/README.md](security/README.md) - Module documentation
