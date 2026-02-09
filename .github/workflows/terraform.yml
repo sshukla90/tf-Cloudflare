@@ -41,51 +41,52 @@ jobs:
         env:
           TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       
-      - name: Detect Drift
+      - name: Drift Detection and Auto-Import
         id: drift
         run: |
-          chmod +x scripts/detect-drift.sh
-          ./scripts/detect-drift.sh
-        env:
-          TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        continue-on-error: true
-      
-      - name: Auto-Import Unmanaged Rules
-        if: steps.drift.outcome == 'failure'
-        id: auto_import
-        run: |
-          chmod +x scripts/auto-import-drift.sh
-          ./scripts/auto-import-drift.sh
+          chmod +x scripts/drift-handler.sh
+          ./scripts/drift-handler.sh --import
         env:
           TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       
       - name: Commit imported rules
-        if: steps.drift.outcome == 'failure'
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add shared/config.yaml
-          git commit -m "Auto-import: Add unmanaged rules from Cloudflare" || echo "No changes to commit"
-          git push
+          if git diff --quiet shared/config.yaml; then
+            echo "No changes to commit"
+          else
+            git add shared/config.yaml
+            git commit -m "Auto-import: Add unmanaged rules from Cloudflare"
+            git push
+          fi
       
       - name: Comment on PR about auto-import
-        if: steps.drift.outcome == 'failure'
+        if: steps.drift.outcome == 'success'
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: `## ✅ Drift Auto-Imported!
-              
+            const fs = require('fs');
+            const configDiff = require('child_process').execSync('git diff HEAD~1 shared/config.yaml || echo "No changes"').toString();
+            
+            if (configDiff.includes('No changes')) {
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: `## ✅ Drift Check Complete
+                
+No drift detected. All rules in sync.`
+              });
+            } else {
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: `## ✅ Drift Auto-Imported!
+                
 Manual changes were detected in Cloudflare and have been **automatically imported**.
-
-**What happened:**
-- Found unmanaged rules in Cloudflare
-- Auto-imported them into \`shared/config.yaml\`
-- Imported into Terraform state
 
 **Action Required (Platform Team):**
 1. Review the auto-imported rules in \`shared/config.yaml\`
@@ -93,7 +94,8 @@ Manual changes were detected in Cloudflare and have been **automatically importe
 3. Approve this PR if everything looks good
 
 **Note:** These rules were manually added in Cloudflare. Going forward, all changes should be made via this repo.`
-            })
+              });
+            }
 
   # Step 2: Terraform plan on PR
   terraform-plan:
