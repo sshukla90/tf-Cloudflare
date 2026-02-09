@@ -1,0 +1,5 @@
+cloudflare_api_token  = "token here"
+cloudflare_account_id = "a646a5b04f5bd1a4cdcaaf82711d8de1"
+cloudflare_zone_id    = "52d3466c4c4cbbf14ffee4f0f779a931"
+config_file_path      = "./shared/config.yaml"
+

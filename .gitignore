@@ -1,0 +1,30 @@
+# Add terraform state files to gitignore
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+
+# Backup files
+*.backup.*
+
+# Sensitive files
+terraform.tfvars
+*.auto.tfvars
+
+# Crash log files
+crash.log
+crash.*.log
+
+# Override files
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# CLI configuration files
+.terraformrc
+terraform.rc
+
+# Temporary files
+/tmp/
+*.tmp

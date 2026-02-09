@@ -1,0 +1,27 @@
+# Cloudflare IP Access Rules Configuration
+# 
+# This file defines IP access rules to be managed by Terraform
+# 
+# Fields:
+#   ip (required): IP address or CIDR range (e.g., "198.51.100.4" or "203.0.113.0/24")
+#   mode (required): One of: block, challenge, whitelist, js_challenge, managed_challenge
+#   scope (optional): Either "account" or "zone" - defaults to "account"
+#   notes (required): Explanation with date/reason for the rule
+
+ip_access_rules:
+  # Example: Block a specific IP at account level
+  - ip: "198.51.100.4"
+    mode: "block"
+    scope: "account"
+    notes: "This rule is enabled because of security incident on 2026-02-09"
+  
+  # Example: Challenge a CIDR range at zone level
+  # - ip: "203.0.113.0/24"
+  #   mode: "challenge"
+  #   scope: "zone"
+  #   notes: "This rule is enabled because of suspicious activity on 2026-02-08"
+  
+  # Example: Whitelist a trusted IP (scope defaults to account)
+  # - ip: "192.0.2.100"
+  #   mode: "whitelist"
+  #   notes: "This rule is enabled because of trusted partner access on 2026-01-15"
